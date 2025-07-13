@@ -3,25 +3,26 @@ import { Product } from '../types/product.types';
 
 // Environment-based configuration
 const getApiUrl = (): string => {
-  // Check if we have an external API URL configured
-  const externalApiUrl = process.env.NEXT_PUBLIC_EXTERNAL_API_URL;
-  if (externalApiUrl) {
-    return externalApiUrl;
-  }
+  console.log('Environment check:', {
+    isServer: typeof window === 'undefined',
+    vercelUrl: process.env.VERCEL_URL,
+    externalApiUrl: process.env.NEXT_PUBLIC_EXTERNAL_API_URL
+  });
   
-  // Fallback to internal API routes
   if (typeof window === 'undefined') {
-    // Server-side: use the full URL
-    return process.env.VERCEL_URL ? 
-           `https://${process.env.VERCEL_URL}/api/products` : 
-           'http://localhost:3000/api/products';
+    // Server-side: use external API directly to avoid circular calls during SSR
+    const url = process.env.NEXT_PUBLIC_EXTERNAL_API_URL || 'https://dulakna.runasp.net/api/products';
+    console.log('Server-side API URL (direct external):', url);
+    return url;
   }
   
-  // Client-side: use relative URLs
+  // Client-side: use local API routes that proxy to external API
+  console.log('Client-side using local API routes: /api/products');
   return '/api/products';
 };
 
 const API_BASE_URL = getApiUrl();
+console.log('Final API_BASE_URL:', API_BASE_URL);
 
 // Response handler utility
 class ApiError extends Error {
@@ -45,15 +46,24 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
   return response.text() as unknown as T;
 }
 
-// API request builder
-const buildRequest = (method: string, body?: object): RequestInit => ({
-  method,
-  headers: {
+// API request builder with better error handling
+const buildRequest = (method: string, body?: object): RequestInit => {
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-  },
-  ...(body && { body: JSON.stringify(body) }),
-});
+  };
+
+  const config: RequestInit = {
+    method,
+    headers,
+    mode: 'cors', // Explicitly set CORS mode
+    credentials: 'omit', // Don't send credentials for external API
+    ...(body && { body: JSON.stringify(body) }),
+  };
+
+  console.log(`API Request: ${method} ${API_BASE_URL}`, config);
+  return config;
+};
 
 // Product service functions
 export const ProductService = {

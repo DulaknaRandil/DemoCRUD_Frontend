@@ -2,16 +2,26 @@
 import { Product } from '../types/product.types';
 
 // Environment-based configuration
-const getBaseUrl = (): string => {
-  // For server-side rendering, use full URL
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const getApiUrl = (): string => {
+  // Check if we have an external API URL configured
+  const externalApiUrl = process.env.NEXT_PUBLIC_EXTERNAL_API_URL;
+  if (externalApiUrl) {
+    return externalApiUrl;
   }
-  // For client-side, use relative URLs
-  return '';
+  
+  // Fallback to internal API routes
+  if (typeof window === 'undefined') {
+    // Server-side: use the full URL
+    return process.env.VERCEL_URL ? 
+           `https://${process.env.VERCEL_URL}/api/products` : 
+           'http://localhost:3000/api/products';
+  }
+  
+  // Client-side: use relative URLs
+  return '/api/products';
 };
 
-const API_BASE_URL = `${getBaseUrl()}/api/products`;
+const API_BASE_URL = getApiUrl();
 
 // Response handler utility
 class ApiError extends Error {

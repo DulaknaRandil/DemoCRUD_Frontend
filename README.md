@@ -350,7 +350,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Dulakna Randil**
 - GitHub: [@DulaknaRandil](https://github.com/DulaknaRandil)
-- Email: [your-randildulakna@gmail.com]
+- Email: [randildulakna@gmail.com]
 
 ## 🙏 Acknowledgments
 
